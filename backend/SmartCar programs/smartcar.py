@@ -548,6 +548,62 @@ class SmartCar(object):
                 self.debug_image = SC_DEBUG_NONE
         self.stop_timer("user_command")
 
+    # Handle the user input
+    def user_command_voiceRec(self):
+        self.start_timer("user_command")
+        key = None
+        if self.use_local_window:
+            # catch the key
+            key = cv2.waitKey(1) & 0xFF
+        elif self.use_socket:
+            # Use select to check if data is available (non-blocking)
+            readable, _, _ = select.select([self.conn], [], [], 0.1)
+            if readable:
+                try:
+                    key = self.conn.recv(1).decode('utf-8')  # Read 1-byte key input
+                    if key:
+                        print(f"Received key: {key}")  # Process key input here
+                        key = ord(key)
+                except:
+                    pass  # Ignore small errors
+        # Press q on keyboard to stop program
+        if key == ord('q'):
+            self.quit = True
+        # driving commands
+        if self.drive_control:
+            if key == ord('f'): # forward
+                self.speed = 10
+                print("speed:", self.speed)
+            if key == ord('w'): # faster
+                self.speed = self.speed + 10
+                print("speed:", self.speed)
+            elif key == ord('s'): #slower
+                if self.speed > 0:
+                    self.speed = self.speed - 10
+                print("speed:", self.speed)
+            elif key == ord('b'): # backward
+                self.speed = -10
+                print("speed:", self.speed)
+            elif key == ord('x'): # stop
+                self.speed = 0
+                print("speed:", self.speed)
+            
+
+        # steering commands
+        if self.steer_control:
+            if key == ord('a'): # left
+                self.steer = self.steer - 5
+                if self.steer < 50:
+                    self.steer = 50
+                print("steer:", self.steer)
+            elif key == ord('d'): # right
+                self.steer = self.steer + 5
+                if self.steer > 140:
+                    self.steer = 140
+                print("steer:", self.steer)
+        
+        self.stop_timer("user_command")
+
     # Apply the values to the PiCar actuators
     def handle_actuators(self):
         self.start_timer("handle_actuators")
@@ -759,7 +815,8 @@ class SmartCar(object):
                 break
             self.handle_actuators()
 
-       # Drive the car manually while showing a camera window
+    
+    # Drive the car manually while showing a camera window
     # The user can interact with the car using the keyboard:
     # See variable 'text' for key assignments
     def drive_and_record_loop_voiceRec(self):
@@ -776,6 +833,8 @@ class SmartCar(object):
             if self.quit:
                 break
             self.handle_actuators()
+
+
 
     # Drive the car manually while showing a camera window
     # The user can interact with the car using the keyboard:
@@ -797,49 +856,7 @@ class SmartCar(object):
             self.handle_window()
 
     
-    def user_command_voiceRec(self):
-        self.start_timer("user_command")
-        key = None
-        if self.use_local_window:
-            # catch the key
-            key = cv2.waitKey(1) & 0xFF
-        elif self.use_socket:
-            # Use select to check if data is available (non-blocking)
-            readable, _, _ = select.select([self.conn], [], [], 0.1)
-            if readable:
-                try:
-                    key = self.conn.recv(1).decode('utf-8')  # Read 1-byte key input
-                    if key:
-                        print(f"Received key: {key}")  # Process key input here
-                        key = ord(key)
-                except:
-                    pass  # Ignore small errors
-        # Press q on keyboard to stop program
-        if key == ord('q'):
-            self.quit = True
-        # driving commands
-        if self.drive_control:
-            if key == ord('w'):
-                self.speed = self.speed + 10
-                print("speed:", self.speed)
-            elif key == ord('s'):
-                self.speed = self.speed - 10
-                print("speed:", self.speed)
-        # steering commands
-        if self.steer_control:
-            if key == ord('a'):
-                self.steer = self.steer - 5
-                if self.steer < 50:
-                    self.steer = 50
-                print("steer:", self.steer)
-            elif key == ord('d'):
-                self.steer = self.steer + 5
-                if self.steer > 140:
-                    self.steer = 140
-                print("steer:", self.steer)
-
-        self.stop_timer("user_command")
-
+    
 
 
             
