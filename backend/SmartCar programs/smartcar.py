@@ -28,11 +28,22 @@ import socket
 import struct
 import pickle
 import select
+from enum import Enum
 
 # Debug constants for displayed video
 SC_DEBUG_NONE = 0 # No debug information in image
 SC_DEBUG_MASK = 1 # Show the b/w mask image
 SC_DEBUG_OVERLAY = 2 # Show the masked areas inside original image
+
+
+class VoiceCommands(Enum):
+    FORWARD = 0
+    BACKWARD = 1
+    STOP = 2
+    FASTER = 3
+    SLOWER = 4
+    RIGHT = 5
+    LEFT = 6
 
 class SmartCar(object):
     # Constructor
@@ -601,6 +612,67 @@ class SmartCar(object):
                 if self.steer > 140:
                     self.steer = 140
                 print("steer:", self.steer)
+        
+        self.stop_timer("user_command")
+
+
+     #Handle the user input
+    def voiceRec_actuator(self,commandInput):
+        
+        self.start_timer("user_command")
+        
+        if self.use_local_window:
+            # catch the key
+            key = cv2.waitKey(1) & 0xFF
+        elif self.use_socket:
+            # Use select to check if data is available (non-blocking)
+            readable, _, _ = select.select([self.conn], [], [], 0.1)
+            if readable:
+                try:
+                    key = self.conn.recv(1).decode('utf-8')  # Read 1-byte key input
+                    if key:
+                        print(f"Received key: {key}")  # Process key input here
+                        key = ord(key)
+                except:
+                    pass  # Ignore small errors
+        # driving commands
+        # Press q on keyboard to stop program
+        if key == ord('q'):
+            self.quit = True
+
+        # driving commands
+        if self.drive_control:
+            if commandInput == VoiceCommands.FORWARD:
+                self.speed = 10
+                print("speed:", self.speed)
+            elif commandInput == VoiceCommands.FASTER:
+                self.speed += 10
+                print("speed:", self.speed)
+            elif commandInput == VoiceCommands.SLOWER:
+                if self.speed > 0:
+                    self.speed -= 10
+                print("speed:", self.speed)
+            elif commandInput == VoiceCommands.BACKWARD:
+                self.speed = -10
+                print("speed:", self.speed)
+            elif commandInput == VoiceCommands.STOP:
+                self.speed = 0
+                print("speed:", self.speed)
+
+        # steering commands
+        if self.steer_control:
+            if commandInput == VoiceCommands.LEFT:
+                self.steer -= 5
+                if self.steer < 50:
+                    self.steer = 50
+                print("steer:", self.steer)
+            elif commandInput == VoiceCommands.RIGHT:
+                self.steer += 5
+                if self.steer > 140:
+                    self.steer = 140
+                print("steer:", self.steer)
+
+
         
         self.stop_timer("user_command")
 

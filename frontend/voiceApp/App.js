@@ -73,7 +73,7 @@ export default function App() {
         });
 
         // Realiza el envío al servidor Python usando fetch
-        const response = await fetch('http://10.204.113.101:50007/upload', {
+        const response = await fetch('http://192.168.98.47:50009/upload', {
           method: 'POST',
           body: formData,
           headers: {

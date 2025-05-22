@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from pydub import AudioSegment
+import smartcar
 import os
 
 app = Flask(__name__)
@@ -8,6 +9,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.route('/upload', methods=['POST'])
 def upload_audio():
+    sc = smartcar.SmartCar()
     if 'audio' not in request.files:
         return jsonify({'status': 'error', 'message': 'No se recibió archivo'}), 400
 
